@@ -1,92 +1,109 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../css/app.css";
 
-export default function Home (){
-
+export default function Home() {
     const [todoList, setTodoList] = useState([]);
-    const [todo, setTodo] = useState()
+    const [value, setValue] = useState("");
 
     useEffect(() => {
-        GetTodo()
-    }, [])
+        async function getTodo() {
+            try {
+                const response = await fetch("https://127.0.0.1:8001/api/todo");
+                if (response.ok) {
+                    const todoResponse = await response.json();
+                    setTodoList(todoResponse);
+                    console.log("OK");
+                }
+            } catch (error) {
+                console.error("Une erreur s'est produite lors de la récupération des todos :", error);
+            }
+        }
 
-    async function GetTodo(){
-        const response = await fetch('https://127.0.0.1:8001/api/todo');
-        if (response.ok){
-            const todo = await response.json();
-            setTodoList(todo);
+        getTodo();
+    }, []);
+
+    function handleChange(e) {
+        setValue(e.target.value);
+    }
+
+    async function handleAddTodo() {
+        try {
+            const response = await fetch("https://127.0.0.1:8001/api/todo/post", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: value,
+                    edit: false,
+                    done: false
+                })
+            });
+
+            if (response.ok) {
+                const todoResponse = await response.json();
+                console.log("Nouveau todo ajouté :", todoResponse);
+                setTodoList([...todoList, todoResponse]);
+            }
+        } catch (error) {
+            console.error("Une erreur s'est produite lors de l'ajout du todo :", error);
+        }
+
+        setValue("");
+    }
+
+    async function handleDelete(id) {
+        try {
+            const todoDelete = todoList.find(m => m.id === id);
+            console.log(todoDelete);
+
+            const response = await fetch(`https://127.0.0.1:8001/api/todo/delete/${todoDelete.id}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                console.log("Todo " + todoDelete.id + " supprimé");
+                deleteTodo(todoDelete.id);
+            }
+        } catch (error) {
+            console.error("Une erreur s'est produite lors de la suppression du todo :", error);
         }
     }
 
-    function handleChange (e){
-        setTodo(e.target.value)
-    }
-
-    async function addTodo(){
-        const response = await fetch('https://127.0.0.1:8001/api/todo/post', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                title: todo,
-                done: false,
-                edit: false
-            })
-        })
-
-        if(response.ok){
-            const todo = await response.json();
-            console.log('Nouveau todo ajouté :', todo);
-        }
-    }
-
-    async function handlDelete(){
-        const response = await fetch('https://127.0.0.1:8001/api/todo/delete', {
-            method: 'DELETE'
-        })
+    function deleteTodo(id) {
+        const updatedTodoList = todoList.filter(m => m.id !== id);
+        setTodoList(updatedTodoList);
     }
 
     console.log(todoList);
+
     return (
         <div className="container">
             <div className="todo">
                 <h1>Todo App with API by Symfony</h1>
                 <div className="input-todo">
-                    <input type="text" value={todo} onChange={handleChange}/>
-                    <button className="add" onClick={addTodo}>ADD</button>
+                    <input type="text" value={value} onChange={handleChange} />
+                    <button className="add" onClick={handleAddTodo}>
+                        ADD
+                    </button>
                 </div>
-                    <div className="list-todo">
-                        <ul>
-                            {
-                                todoList.map((m) =>       
-                                <li key={m.id}>{m.title} 
-                                    <div> 
-                                        <button className="delete">Supprimer</button> 
-                                        <span className="verticale">|</span>
-                                        <button className="edit">Modifier</button>
-                                    </div>
-                                </li>
-                                )
-                            }
-                        </ul>
-                    </div>
+                <div className="list-todo">
+                    <ul>
+                        {todoList.map(m => (
+                            <li key={m.id}>
+                                {m.title}
+                                <div>
+                                    <button className="delete" onClick={() => handleDelete(m.id)}>
+                                        Supprimer
+                                    </button>
+                                    <span className="verticale">|</span>
+                                    <button className="edit">Modifier</button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             </div>
-    )
+        </div>
+    );
 }
-
-/*
-
-
-
-<div className="info">
-                            <input type="checkbox" id="todo"/>
-                            <label htmlFor="todo">Test</label>
-                        </div>
-
-                        <div className="action">
-                            <button className="edit">Modifier</button>
-                            <span className="verticale">|</span>
-                            <button className="delete">Supprimer</button>
-                        </div>*/

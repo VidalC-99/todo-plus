@@ -39,17 +39,20 @@ class TodoController extends AbstractController
     }
 
 
-    #[Route('/api/todo/delete', name: 'delete_todo', methods:['DELETE'])]
-    public function deleteTodo(TodoRepository $todoRepository, Request $request, EntityManagerInterface $em, SerializerInterface $serializer)
+    #[Route('/api/todo/delete/{id}', name: 'delete_todo', methods:['DELETE'])]
+    public function deleteTodo(TodoRepository $todoRepository, int $id, Request $request, EntityManagerInterface $em, SerializerInterface $serializer)
     {
         $jsonReceip = $request->getContent();
+        $post = $todoRepository->find($id);
         try {
-            $post = $serializer->deserialize($jsonReceip, Todo::class, 'json');
             $em->remove($post);
+            $em->flush();
+            
             return $this->json($post, 200, []);
         } catch (\Throwable $th) {
             //throw $th;
         }
-
+        //dd($jsonReceip);
+        return $this->json($post);
     }
 }
