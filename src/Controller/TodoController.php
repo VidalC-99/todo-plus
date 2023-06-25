@@ -55,4 +55,23 @@ class TodoController extends AbstractController
         //dd($jsonReceip);
         return $this->json($post);
     }
+
+    #[Route('/api/todo/editDone/{id}', name:'edit_todo', methods:['PATCH'])]
+    public function doneTodo(TodoRepository $todoRepository, EntityManagerInterface $em, int $id, Request $request, SerializerInterface $serialize)
+    {
+        try{
+
+            $todoToUpdate = $todoRepository->find($id);
+            $jsonReceipe = $request->getContent();
+            $updateTodo = $serialize->deserialize($jsonReceipe, Todo::class, 'json');
+            $todoToUpdate->setDone($updateTodo->isDone());
+            //dd($post);
+            $em->flush();
+            return $this->json($todoToUpdate);
+            
+        }catch(\Throwable $th){
+            throw $th;
+        }
+
+    }
 }

@@ -2,108 +2,140 @@ import React, { useEffect, useState } from "react";
 import "../../css/app.css";
 
 export default function Home() {
-    const [todoList, setTodoList] = useState([]);
-    const [value, setValue] = useState("");
+  const [todoList, setTodoList] = useState([]);
+  const [value, setValue] = useState("");
 
-    useEffect(() => {
-        async function getTodo() {
-            try {
-                const response = await fetch("https://127.0.0.1:8001/api/todo");
-                if (response.ok) {
-                    const todoResponse = await response.json();
-                    setTodoList(todoResponse);
-                    console.log("OK");
-                }
-            } catch (error) {
-                console.error("Une erreur s'est produite lors de la récupération des todos :", error);
-            }
+  useEffect(() => {
+    async function getTodo() {
+      try {
+        const response = await fetch("https://127.0.0.1:8001/api/todo");
+        if (response.ok) {
+          const todoResponse = await response.json();
+          setTodoList(todoResponse);
+          console.log("OK");
         }
-
-        getTodo();
-    }, []);
-
-    function handleChange(e) {
-        setValue(e.target.value);
+      } catch (error) {
+        console.error("Une erreur s'est produite lors de la récupération des todos :", error);
+      }
     }
 
-    async function handleAddTodo() {
-        try {
-            const response = await fetch("https://127.0.0.1:8001/api/todo/post", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    title: value,
-                    edit: false,
-                    done: false
-                })
-            });
+    getTodo();
+  }, []);
 
-            if (response.ok) {
-                const todoResponse = await response.json();
-                console.log("Nouveau todo ajouté :", todoResponse);
-                setTodoList([...todoList, todoResponse]);
-            }
-        } catch (error) {
-            console.error("Une erreur s'est produite lors de l'ajout du todo :", error);
-        }
+  function handleChange(e) {
+    setValue(e.target.value);
+  }
 
-        setValue("");
+  async function handleAddTodo() {
+    try {
+      const response = await fetch("https://127.0.0.1:8001/api/todo/post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title: value,
+          edit: false,
+          done: false
+        })
+      });
+
+      if (response.ok) {
+        const todoResponse = await response.json();
+        console.log("Nouveau todo ajouté :", todoResponse);
+        setTodoList([...todoList, todoResponse]);
+      }
+    } catch (error) {
+      console.error("Une erreur s'est produite lors de l'ajout du todo :", error);
     }
 
-    async function handleDelete(id) {
-        try {
-            const todoDelete = todoList.find(m => m.id === id);
-            console.log(todoDelete);
+    setValue("");
+  }
 
-            const response = await fetch(`https://127.0.0.1:8001/api/todo/delete/${todoDelete.id}`, {
-                method: "DELETE"
-            });
+  async function handleDelete(id) {
+    try {
+      const todoDelete = todoList.find(m => m.id === id);
+      console.log(todoDelete);
 
-            if (response.ok) {
-                console.log("Todo " + todoDelete.id + " supprimé");
-                deleteTodo(todoDelete.id);
-            }
-        } catch (error) {
-            console.error("Une erreur s'est produite lors de la suppression du todo :", error);
-        }
+      const response = await fetch(`https://127.0.0.1:8001/api/todo/delete/${todoDelete.id}`, {
+        method: "DELETE"
+      });
+
+      if (response.ok) {
+        console.log("Todo " + todoDelete.id + " supprimé");
+        deleteTodo(todoDelete.id);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
     }
+  }
 
-    function deleteTodo(id) {
-        const updatedTodoList = todoList.filter(m => m.id !== id);
-        setTodoList(updatedTodoList);
+  function deleteTodo(id) {
+    const updatedTodoList = todoList.filter(m => m.id !== id);
+    setTodoList(updatedTodoList);
+  }
+
+  async function handleCheck(id) {
+    const todoToUpdate = todoList.map(todo => {
+      if (todo.id === id) {
+        return { ...todo, done: !todo.done };
+      }
+      return todo;
+    });
+
+    setTodoList(todoToUpdate);
+
+    try {
+      const response = await fetch(`https://127.0.0.1:8001/api/todo/editDone/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ done: todoToUpdate.find(todo => todo.id === id)?.done })
+      });
+
+      if (response.ok) {
+        console.log("Todo " + id + " mis à jour");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour :", error);
     }
+  }
 
-    console.log(todoList);
+  async function handleEdit (id){
+    
+  }
 
-    return (
-        <div className="container">
-            <div className="todo">
-                <h1>Todo App with API by Symfony</h1>
-                <div className="input-todo">
-                    <input type="text" value={value} onChange={handleChange} />
-                    <button className="add" onClick={handleAddTodo}>
-                        ADD
-                    </button>
-                </div>
-                <div className="list-todo">
-                    <ul>
-                        {todoList.map(m => (
-                            <li key={m.id}>
-                                {m.title}
-                                <div>
-                                    <button className="delete" onClick={() => handleDelete(m.id)}>
-                                        Supprimer
-                                    </button>
-                                    <span className="verticale">|</span>
-                                    <button className="edit">Modifier</button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            </div>
+  return (
+    <div className="container">
+      <div className="todo">
+        <h1>Todo App with API by Symfony</h1>
+        <div className="input-todo">
+          <input type="text" value={value} onChange={handleChange} />
+          <button className="add" onClick={handleAddTodo}>
+            ADD
+          </button>
         </div>
-    );
+        <div className="list-todo">
+          <ul>
+            {todoList.map(m => (
+              <li key={m.id}>
+                <div>
+                  <input type="checkbox" className="check" checked={m.done} onChange={() => handleCheck(m.id)} />
+                  {m.title}
+                </div>
+                <div>
+                  <button className="delete" onClick={() => handleDelete(m.id)}>
+                    Supprimer
+                  </button>
+                  <span className="verticale">|</span>
+                  <button className="edit" onClick={() => handleEdit(m.id)}>Modifier</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 }
