@@ -74,4 +74,43 @@ class TodoController extends AbstractController
         }
 
     }
+
+    #[Route('/api/todo/editMode/{id}', name:'editMode_todo', methods:['PATCH'])]
+    public function editMode(TodoRepository $todoRepository, EntityManagerInterface $em, int $id, Request $request, SerializerInterface $serialize)
+    {
+        try{
+
+            $todoToUpdate = $todoRepository->find($id);
+            $jsonReceipe = $request->getContent();
+            $updateTodo = $serialize->deserialize($jsonReceipe, Todo::class, 'json');
+            $todoToUpdate->setEdit($updateTodo->isEdit());
+            //dd($post);
+            $em->flush();
+            return $this->json($todoToUpdate);
+            
+        }catch(\Throwable $th){
+            throw $th;
+        }
+
+    }
+
+    #[Route('/api/todo/editTitle/{id}', name:'editTitle_todo', methods:['PATCH'])]
+    public function editTitle(TodoRepository $todoRepository, EntityManagerInterface $em, int $id, Request $request, SerializerInterface $serialize)
+    {
+        try{
+
+            $todoToUpdate = $todoRepository->find($id);
+            $jsonReceipe = $request->getContent();
+            $updateTodo = $serialize->deserialize($jsonReceipe, Todo::class, 'json');
+            $todoToUpdate->setTitle($updateTodo->getTitle());
+            //dd($post);
+            $em->flush();
+            return $this->json($todoToUpdate);
+            
+        }catch(\Throwable $th){
+            throw $th;
+        }
+
+    }
+
 }

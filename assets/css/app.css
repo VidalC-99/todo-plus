@@ -124,3 +124,19 @@ li{
 .check {
     margin-right: 20px;
 }
+
+.save {
+    background-color: rgb(67, 223, 101);
+    color: #eee;
+    width: 80px;
+    padding: 8px;
+    border-radius: 50px;
+    border: none;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.save:hover{
+    background-color: rgb(53, 182, 81);
+    transition: all 0.3s;
+}

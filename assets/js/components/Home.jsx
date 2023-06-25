@@ -4,6 +4,7 @@ import "../../css/app.css";
 export default function Home() {
   const [todoList, setTodoList] = useState([]);
   const [value, setValue] = useState("");
+  const [valueTodo, setValueTodo] = useState("");
 
   useEffect(() => {
     async function getTodo() {
@@ -102,8 +103,68 @@ export default function Home() {
     }
   }
 
-  async function handleEdit (id){
-    
+  async function handleEdit(id) {
+    const todoToUpdate = todoList.map(todo => {
+      if (todo.id === id) {
+        setValueTodo(todo.title);
+        return { ...todo, edit: !todo.edit };
+      }
+      return todo;
+    });
+
+    setTodoList(todoToUpdate);
+
+    try {
+      const response = await fetch(`https://127.0.0.1:8001/api/todo/editMode/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ edit: todoToUpdate.find(todo => todo.id === id)?.edit })
+      });
+
+      if (response.ok) {
+        console.log("Todo " + id + " mis à jour");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour :", error);
+    }
+  }
+
+  async function saveChange(id) {
+    const todoToUpdate = todoList.map(todo => {
+      if (todo.id === id) {
+        return { ...todo, title: valueTodo };
+      }
+      return todo;
+    });
+
+    setTodoList(todoToUpdate);
+
+    try {
+      const response = await fetch(`https://127.0.0.1:8001/api/todo/editTitle/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ title: todoToUpdate.find(todo => todo.id === id)?.title })
+      });
+
+      if (response.ok) {
+        console.log("Todo " + id + " mis à jour");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour :", error);
+    }
+  }
+
+  function handleSave(id) {
+    saveChange(id);
+    handleEdit(id);
+  }
+
+  function handleChangeEdit(e) {
+    setValueTodo(e.target.value);
   }
 
   return (
@@ -122,14 +183,24 @@ export default function Home() {
               <li key={m.id}>
                 <div>
                   <input type="checkbox" className="check" checked={m.done} onChange={() => handleCheck(m.id)} />
-                  {m.title}
+                  {!m.edit ? m.title : <input type="text" onChange={handleChangeEdit} value={valueTodo} />}
                 </div>
                 <div>
-                  <button className="delete" onClick={() => handleDelete(m.id)}>
-                    Supprimer
-                  </button>
-                  <span className="verticale">|</span>
-                  <button className="edit" onClick={() => handleEdit(m.id)}>Modifier</button>
+                  {!m.edit ? (
+                    <>
+                      <button className="delete" onClick={() => handleDelete(m.id)}>
+                        Supprimer
+                      </button>
+                      <span className="verticale">|</span>
+                      <button className="edit" onClick={() => handleEdit(m.id)}>
+                        Modifier
+                      </button>
+                    </>
+                  ) : (
+                    <button className="save" onClick={() => handleSave(m.id)}>
+                      Enregistrer
+                    </button>
+                  )}
                 </div>
               </li>
             ))}
